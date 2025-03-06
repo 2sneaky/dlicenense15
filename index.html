@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tab</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            text-align: center;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        input {
+            padding: 10px;
+            width: 70%;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3367d6;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Extension Soft-Disabler</h1>
+        <p>Enter the extension ID below to disable it:</p>
+        <input type="text" id="extensionId" placeholder="Extension ID">
+        <br>
+        <button id="disableBtn">Go!</button>
+        <div id="statusMessage" class="status"></div>
+    </div>
+
+    <script>
+        document.getElementById('disableBtn').addEventListener('click', function() {
+            const extensionId = document.getElementById('extensionId').value.trim();
+            const statusMessage = document.getElementById('statusMessage');
+            
+            if (!extensionId) {
+                showStatus('Please enter a valid extension ID', 'error');
+                return;
+            }
+            
+            // Send message to background script to disable the extension
+            chrome.runtime.sendMessage({
+                action: 'disableExtension',
+                extensionId: extensionId
+            }, function(response) {
+                if (response && response.success) {
+                    showStatus(`Extension ${extensionId} has been disabled successfully!`, 'success');
+                } else {
+                    showStatus(`Failed to disable extension: ${response ? response.error : 'Unknown error'}`, 'error');
+                }
+            });
+        });
+        
+        function showStatus(message, type) {
+            const statusElement = document.getElementById('statusMessage');
+            statusElement.textContent = message;
+            statusElement.className = 'status ' + type;
+            statusElement.style.display = 'block';
+            
+            // Hide the message after 5 seconds
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
+
