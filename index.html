@@ -66,34 +66,45 @@
 </head>
 <body>
     <div class="container">
-        <h1>Extension Soft-Disabler</h1>
-        <p>Enter the extension ID below to disable it:</p>
-        <input type="text" id="extensionId" placeholder="Extension ID">
-        <br>
-        <button id="disableBtn">Go!</button>
+        <h1>GoGuardian Disabler</h1>
+        <p>Click the button below to disable GoGuardian:</p>
+        <button id="disableBtn">Disable GoGuardian</button>
         <div id="statusMessage" class="status"></div>
     </div>
 
     <script>
         document.getElementById('disableBtn').addEventListener('click', function() {
-            const extensionId = document.getElementById('extensionId').value.trim();
-            const statusMessage = document.getElementById('statusMessage');
+            // List of domains associated with GoGuardian
+            const domains = [
+                '.goguardian.com',
+                'goguardian.com',
+                '.student.goguardian.com',
+                'student.goguardian.com'
+            ];
+
+            let cookiesRemoved = 0;
             
-            if (!extensionId) {
-                showStatus('Please enter a valid extension ID', 'error');
-                return;
-            }
-            
-            // Send message to background script to disable the extension
-            chrome.runtime.sendMessage({
-                action: 'disableExtension',
-                extensionId: extensionId
-            }, function(response) {
-                if (response && response.success) {
-                    showStatus(`Extension ${extensionId} has been disabled successfully!`, 'success');
-                } else {
-                    showStatus(`Failed to disable extension: ${response ? response.error : 'Unknown error'}`, 'error');
-                }
+            // Remove cookies for each domain
+            domains.forEach(domain => {
+                chrome.cookies.getAll({domain: domain}, function(cookies) {
+                    if (cookies && cookies.length > 0) {
+                        cookies.forEach(cookie => {
+                            chrome.cookies.remove({
+                                url: `https://${domain}${cookie.path}`,
+                                name: cookie.name
+                            }, function() {
+                                cookiesRemoved++;
+                                if (chrome.runtime.lastError) {
+                                    showStatus('Error removing cookies: ' + chrome.runtime.lastError.message, 'error');
+                                } else if (cookiesRemoved === cookies.length) {
+                                    showStatus('GoGuardian cookies have been removed. Please refresh your tabs.', 'success');
+                                }
+                            });
+                        });
+                    } else {
+                        showStatus('No GoGuardian cookies found on ' + domain, 'success');
+                    }
+                });
             });
         });
         
@@ -111,4 +122,3 @@
     </script>
 </body>
 </html>
-
